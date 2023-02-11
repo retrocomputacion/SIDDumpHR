@@ -1,7 +1,8 @@
-SIDDump V1.08
-by Lasse Oorni (loorni@gmail.com) and Stein Pedersen
+SIDDumpHR V1.0
+Original SIDDump V1.09 by Lasse Oorni (loorni@gmail.com) and Stein Pedersen
+with modifications by Pablo Roldán 
 
-Version history:
+Version history (SIDDump):
 
 V1.0    - Original
 V1.01   - Fixed BIT instruction
@@ -14,7 +15,12 @@ V1.06   - Added CPU cycle profiling functionality by Stein Pedersen
 V1.07   - Support rudimentary line counting for SID detection routines
 V1.08   - CPU bugfixes
 
-Copyright (C) 2005-2020 by the authors. All rights reserved.
+Version history (SIDDumpHR):
+
+V1.0    - Add color output when the waveform and ADSR registers are written
+          to multiple times per frame.
+
+Copyright (C) 2005-2023 by the authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
