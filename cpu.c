@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "cpu.h"
 
 #define FN 0x80
 #define FV 0x40
@@ -28,9 +29,13 @@
 #define INDIRECTY() (((MEM(LO()) | (MEM((LO() + 1) & 0xff) << 8)) + y) & 0xffff)
 #define INDIRECTZP() (((MEM(LO()) | (MEM((LO() + 1) & 0xff) << 8)) + 0) & 0xffff)
 
-#define WRITE(address)                  \
-{                                       \
-  /* cpuwritemap[(address) >> 6] = 1; */  \
+#define WRITE(address)                                                                           \
+{                                                                                                \
+  /* cpuwritemap[(address) >> 6] = 1; */                                                         \
+  if (((wpoint.acctype & 1) == 1) && (address >= wpoint.startaddr) && (address <= wpoint.endaddr)) \
+  {                                                                                              \
+    watchp = address;                                                                            \
+  } \
 }
 
 #define EVALPAGECROSSING(baseaddr, realaddr) ((((baseaddr) ^ (realaddr)) & 0xff00) ? 1 : 0)
@@ -262,6 +267,7 @@ unsigned char flags;
 unsigned char sp;
 unsigned char mem[0x10000];
 unsigned int cpucycles;
+int watchp;
 
 static const int cpucycles_table[] = 
 {
@@ -283,6 +289,15 @@ static const int cpucycles_table[] =
   2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7
 };
 
+typedef struct watchpoint
+{
+  unsigned char acctype;
+  unsigned short startaddr;
+  unsigned short endaddr;
+} WATCHPOINT;
+
+WATCHPOINT wpoint;
+
 void initcpu(unsigned short newpc, unsigned char newa, unsigned char newx, unsigned char newy)
 {
   pc = newpc;
@@ -292,6 +307,13 @@ void initcpu(unsigned short newpc, unsigned char newa, unsigned char newx, unsig
   flags = 0;
   sp = 0xff;
   cpucycles = 0;
+  wpoint = (WATCHPOINT) {0,0,0};
+  watchp = -1;
+}
+
+void watch(unsigned short startaddr, unsigned short endaddr, unsigned char acctype)
+{
+  wpoint = (WATCHPOINT) {acctype,startaddr,endaddr};
 }
 
 int runcpu(void)
@@ -301,6 +323,7 @@ int runcpu(void)
   unsigned char op = FETCH();
   /* printf("PC: %04x OP: %02x A:%02x X:%02x Y:%02x\n", pc-1, op, a, x, y); */
   cpucycles += cpucycles_table[op];
+  watchp = -1;
   switch(op)
   {
     case 0xa7:

@@ -298,6 +298,7 @@ int main(int argc, char **argv)
     printf("------------+");
   }
   printf("\n");
+  char writecnt[29];
 
   // Data collection & display loop
   while (frames < firstframe + seconds*50)
@@ -307,6 +308,11 @@ int main(int argc, char **argv)
     // Run the playroutine
     instr = 0;
     initcpu(playaddress, 0, 0, 0);
+    watch(54272,54300,1);
+    for (c = 0; c < 29; c++)
+    {
+      writecnt[c] = 0;
+    }
     while (runcpu())
     {
       instr++;
@@ -314,6 +320,10 @@ int main(int argc, char **argv)
       {
         printf("Error: CPU executed abnormally high amount of instructions in playroutine, exiting\n");
         return 1;
+      }
+      if (watchp >= 0)
+      {
+         writecnt[watchp-0xd400]++;
       }
       // Test for jump into Kernal interrupt handler exit
       if ((mem[0x01] & 0x07) != 0x5 && (pc == 0xea31 || pc == 0xea81))
@@ -411,13 +421,18 @@ int main(int argc, char **argv)
         else sprintf(&output[strlen(output)], "....  ... ..  ");
 
         // Waveform
-        if ((frames == firstframe) || (newnote) || (chn[c].wave != prevchn[c].wave))
-          sprintf(&output[strlen(output)], "%02X ", chn[c].wave);
-        else sprintf(&output[strlen(output)], ".. ");
+        if (writecnt[4 + (7 * c)]>1)  // Hard restart*
+          sprintf(&output[strlen(output)], "\033[1;32m");
+        if ((frames == firstframe) || (newnote) || (chn[c].wave != prevchn[c].wave) || (writecnt[4 + (7 * c)]>1))
+          sprintf(&output[strlen(output)], "%02X\033[0m ", chn[c].wave);
+        else sprintf(&output[strlen(output)], "..\033[0m ");
 
         // ADSR
-        if ((frames == firstframe) || (newnote) || (chn[c].adsr != prevchn[c].adsr)) sprintf(&output[strlen(output)], "%04X ", chn[c].adsr);
-        else sprintf(&output[strlen(output)], ".... ");
+        if ((writecnt[5 + (7 * c)]>1) || (writecnt[6 + (7 * c)]>1))  // Hard restart*
+          sprintf(&output[strlen(output)], "\033[1;32m");
+        if ((frames == firstframe) || (newnote) || (chn[c].adsr != prevchn[c].adsr) || (writecnt[5 + (7 * c)]>1) || (writecnt[6 + (7 * c)]>1))
+          sprintf(&output[strlen(output)], "%04X\033[0m ", chn[c].adsr);
+        else sprintf(&output[strlen(output)], "....\033[0m ");
 
         // Pulse
         if ((frames == firstframe) || (newnote) || (chn[c].pulse != prevchn[c].pulse)) sprintf(&output[strlen(output)], "%03X ", chn[c].pulse);

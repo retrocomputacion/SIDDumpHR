@@ -3,6 +3,6 @@ CXX=g++
 CFLAGS+=-O3 -Wall
 CXXFLAGS=$(CFLAGS)
 
-siddump.exe: siddump.o cpu.o
+siddumphr: siddump.o cpu.o
 	gcc -o $@ $^ -lm
 	strip $@
